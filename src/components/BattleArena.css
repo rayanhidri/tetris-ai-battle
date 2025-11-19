@@ -1,0 +1,27 @@
+.battle-arena {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;  /* était 20px */
+  }
+  
+  .title {
+    font-size: 36px;  /* était 48px */
+    margin-bottom: 15px;  /* était 30px */
+    color: #00f0f0;
+    text-shadow: 0 0 10px #00f0f0;
+    letter-spacing: 5px;
+  }
+  
+  .boards-container {
+    display: flex;
+    gap: 50px;  /* était 80px */
+    align-items: center;
+  }
+  
+  .vs-divider {
+    font-size: 28px;  /* était 36px */
+    font-weight: bold;
+    color: #f0f000;
+    text-shadow: 0 0 10px #f0f000;
+  }
