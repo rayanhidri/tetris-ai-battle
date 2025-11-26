@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { PIECES, PIECE_TYPES } from '../constants/pieces';
 import { canPlacePiece, mergePieceToBoard, clearLines } from '../utils/gameLogic';
+import { findBestMove } from '../utils/aiMoves';
+
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
@@ -127,6 +129,43 @@ export const useTetris = (isAI = false) => {
     
     return newBoard;
   }, [board, currentPiece, gameOver]);
+
+  // AI auto-play logic
+  useEffect(() => {
+    if (!isAI || gameOver) return;
+    
+    const makeAIMove = () => {
+      const bestMove = findBestMove(board, currentPiece);
+      
+      if (!bestMove) {
+        setGameOver(true);
+        return;
+      }
+      
+      // Execute the best move
+      const pieceData = PIECES[currentPiece.type];
+      const targetRotation = bestMove.rotation;
+      const targetX = bestMove.x;
+      
+      // Set piece to target rotation and position
+      setCurrentPiece(prev => ({
+        ...prev,
+        shape: pieceData.shape[targetRotation],
+        rotation: targetRotation,
+        x: targetX
+      }));
+      
+      // Drop it immediately
+      setTimeout(() => {
+        hardDrop();
+      }, 100); // Small delay so you can see the AI "thinking"
+    };
+    
+    // AI makes decision when new piece spawns
+    const aiTimeout = setTimeout(makeAIMove, 200);
+    
+    return () => clearTimeout(aiTimeout);
+  }, [isAI, currentPiece.type, board, gameOver, hardDrop]);
 
   return {
     board: displayBoard(),
