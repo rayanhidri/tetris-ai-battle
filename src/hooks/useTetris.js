@@ -3,7 +3,6 @@ import { PIECES, PIECE_TYPES } from '../constants/pieces';
 import { canPlacePiece, mergePieceToBoard, clearLines } from '../utils/gameLogic';
 import { findBestMove } from '../utils/aiMoves';
 
-
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 
@@ -28,7 +27,6 @@ export const useTetris = (isAI = false) => {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
-  // Déplace à gauche
   const moveLeft = useCallback(() => {
     if (gameOver) return;
     if (canPlacePiece(board, currentPiece, currentPiece.x - 1, currentPiece.y)) {
@@ -36,7 +34,6 @@ export const useTetris = (isAI = false) => {
     }
   }, [board, currentPiece, gameOver]);
 
-  // Déplace à droite
   const moveRight = useCallback(() => {
     if (gameOver) return;
     if (canPlacePiece(board, currentPiece, currentPiece.x + 1, currentPiece.y)) {
@@ -44,7 +41,6 @@ export const useTetris = (isAI = false) => {
     }
   }, [board, currentPiece, gameOver]);
 
-  // Rotation
   const rotate = useCallback(() => {
     if (gameOver) return;
     const pieceData = PIECES[currentPiece.type];
@@ -60,20 +56,18 @@ export const useTetris = (isAI = false) => {
     }
   }, [board, currentPiece, gameOver]);
 
-  // Drop rapide
   const drop = useCallback(() => {
     if (gameOver) return;
     if (canPlacePiece(board, currentPiece, currentPiece.x, currentPiece.y + 1)) {
       setCurrentPiece(prev => ({ ...prev, y: prev.y + 1 }));
     } else {
-      // Lock la pièce
+      // lock piece and check for lines
       const newBoard = mergePieceToBoard(board, currentPiece);
       const { newBoard: clearedBoard, linesCleared } = clearLines(newBoard);
       
       setBoard(clearedBoard);
       setScore(prev => prev + linesCleared * 100);
       
-      // Nouvelle pièce
       const nextPiece = randomPiece();
       if (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, nextPiece.y)) {
         setGameOver(true);
@@ -83,7 +77,6 @@ export const useTetris = (isAI = false) => {
     }
   }, [board, currentPiece, gameOver]);
 
-  // Hard drop - tombe direct en bas
   const hardDrop = useCallback(() => {
     if (gameOver) return;
     
@@ -92,15 +85,13 @@ export const useTetris = (isAI = false) => {
       newY++;
     }
     
-    // Lock immédiatement à cette position
     const droppedPiece = { ...currentPiece, y: newY };
     const newBoard = mergePieceToBoard(board, droppedPiece);
     const { newBoard: clearedBoard, linesCleared } = clearLines(newBoard);
     
     setBoard(clearedBoard);
-    setScore(prev => prev + linesCleared * 100 + (newY - currentPiece.y) * 2); // Bonus pour hard drop
+    setScore(prev => prev + linesCleared * 100 + (newY - currentPiece.y) * 2);
     
-    // Nouvelle pièce
     const nextPiece = randomPiece();
     if (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, nextPiece.y)) {
       setGameOver(true);
@@ -109,7 +100,6 @@ export const useTetris = (isAI = false) => {
     }
   }, [board, currentPiece, gameOver]);
 
-  // Display board avec la pièce actuelle
   const displayBoard = useCallback(() => {
     const newBoard = board.map(row => [...row]);
     
@@ -130,7 +120,7 @@ export const useTetris = (isAI = false) => {
     return newBoard;
   }, [board, currentPiece, gameOver]);
 
-  // AI auto-play logic
+  // AI plays automatically
   useEffect(() => {
     if (!isAI || gameOver) return;
     
@@ -142,30 +132,47 @@ export const useTetris = (isAI = false) => {
         return;
       }
       
-      // Execute the best move
       const pieceData = PIECES[currentPiece.type];
       const targetRotation = bestMove.rotation;
       const targetX = bestMove.x;
       
-      // Set piece to target rotation and position
-      setCurrentPiece(prev => ({
-        ...prev,
+      // build the piece at target position
+      const finalPiece = {
+        type: currentPiece.type,
         shape: pieceData.shape[targetRotation],
+        color: currentPiece.color,
         rotation: targetRotation,
-        x: targetX
-      }));
+        x: targetX,
+        y: 0
+      };
       
-      // Drop it immediately
-      setTimeout(() => {
-        hardDrop();
-      }, 100); // Small delay so you can see the AI "thinking"
+      // drop it to the bottom
+      let finalY = 0;
+      while (canPlacePiece(board, finalPiece, targetX, finalY + 1)) {
+        finalY++;
+      }
+      
+      finalPiece.y = finalY;
+      
+      // lock and update board
+      const newBoard = mergePieceToBoard(board, finalPiece);
+      const { newBoard: clearedBoard, linesCleared } = clearLines(newBoard);
+      
+      setBoard(clearedBoard);
+      setScore(prev => prev + linesCleared * 100);
+      
+      const nextPiece = randomPiece();
+      if (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, nextPiece.y)) {
+        setGameOver(true);
+      } else {
+        setCurrentPiece(nextPiece);
+      }
     };
     
-    // AI makes decision when new piece spawns
-    const aiTimeout = setTimeout(makeAIMove, 200);
+    const aiTimeout = setTimeout(makeAIMove, 300);
     
     return () => clearTimeout(aiTimeout);
-  }, [isAI, currentPiece.type, board, gameOver, hardDrop]);
+  }, [isAI, currentPiece.type, board, gameOver]);
 
   return {
     board: displayBoard(),
@@ -174,7 +181,7 @@ export const useTetris = (isAI = false) => {
     moveLeft,
     moveRight,
     rotate,
-    drop,     
+    drop,
     hardDrop
   };
 };

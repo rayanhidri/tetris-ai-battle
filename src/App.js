@@ -4,35 +4,19 @@ import { useTetris } from './hooks/useTetris';
 import './App.css';
 
 function App() {
-  // Hook pour le joueur
   const player = useTetris(false);
-  
-  // Hook pour l'AI
   const ai = useTetris(true);
 
-  // Gravity pour le joueur - descend automatiquement
   useEffect(() => {
     if (player.gameOver) return;
     
     const interval = setInterval(() => {
       player.drop();
-    }, 1000); // Descend toutes les secondes
+    }, 1000);
     
     return () => clearInterval(interval);
   }, [player]);
 
-  // Gravity pour l'AI
-  useEffect(() => {
-    if (ai.gameOver) return;
-    
-    const interval = setInterval(() => {
-      ai.drop();
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [ai]);
-
-  // Gestion du clavier pour le joueur
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (player.gameOver) return;
@@ -56,7 +40,7 @@ function App() {
           break;
         case ' ':
           e.preventDefault();
-          player.hardDrop();  // Hard drop avec Espace
+          player.hardDrop();
           break;
         default:
           break;
