@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { PIECES, PIECE_TYPES } from '../constants/pieces';
 import { canPlacePiece, mergePieceToBoard, clearLines } from '../utils/gameLogic';
 import { findBestMove } from '../utils/aiMoves';
+import { countHoles } from '../utils/aiLogic';
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
@@ -21,11 +22,27 @@ const randomPiece = () => {
   };
 };
 
+// Helper to get max height of board
+const getMaxHeight = (board) => {
+  for (let y = 0; y < 20; y++) {
+    if (board[y].some(cell => cell !== null)) {
+      return 20 - y;
+    }
+  }
+  return 0;
+};
+
 export const useTetris = (isAI = false) => {
   const [board, setBoard] = useState(createEmptyBoard());
   const [currentPiece, setCurrentPiece] = useState(randomPiece());
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [stats, setStats] = useState({
+    piecesPlaced: 0,
+    maxHeight: 0,
+    totalHoles: 0,
+    linesCleared: 0
+  });
 
   const moveLeft = useCallback(() => {
     if (gameOver) return;
@@ -152,17 +169,62 @@ export const useTetris = (isAI = false) => {
         finalY++;
       }
       
+      // verify final position is valid
+      if (!canPlacePiece(board, finalPiece, targetX, finalY)) {
+        while (finalY > 0 && !canPlacePiece(board, finalPiece, targetX, finalY)) {
+          finalY--;
+        }
+        
+        if (!canPlacePiece(board, finalPiece, targetX, finalY)) {
+          console.warn(`Cannot place piece at x=${targetX}, skipping`);
+          const nextPiece = randomPiece();
+          setCurrentPiece(nextPiece);
+          return;
+        }
+      }
+      
       finalPiece.y = finalY;
       
       // lock and update board
       const newBoard = mergePieceToBoard(board, finalPiece);
       const { newBoard: clearedBoard, linesCleared } = clearLines(newBoard);
       
+      // Update stats
+      const currentHeight = getMaxHeight(clearedBoard);
+      const currentHoles = countHoles(clearedBoard);
+      
+      setStats(prev => {
+        const newPiecesPlaced = prev.piecesPlaced + 1;
+        const newStats = {
+          piecesPlaced: newPiecesPlaced,
+          maxHeight: Math.max(prev.maxHeight, currentHeight),
+          totalHoles: prev.totalHoles + currentHoles,
+          linesCleared: prev.linesCleared + linesCleared
+        };
+        
+        // Log every 20 pieces
+        if (newPiecesPlaced % 20 === 0) {
+          console.log(`[Piece ${newPiecesPlaced}] Score: ${score}, Height: ${currentHeight}, Holes: ${currentHoles}, MaxHeight: ${newStats.maxHeight}, TotalLines: ${newStats.linesCleared}`);
+        }
+        
+        return newStats;
+      });
+      
       setBoard(clearedBoard);
-      setScore(prev => prev + linesCleared * 100);
+      setScore(prev => prev + linesCleared * 100 + finalY * 2);
       
       const nextPiece = randomPiece();
       if (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, nextPiece.y)) {
+        // Final stats at game over
+        console.log(`
+=== GAME OVER ===
+Final Score: ${score}
+Pieces Placed: ${stats.piecesPlaced + 1}
+Max Height Reached: ${stats.maxHeight}
+Total Lines Cleared: ${stats.linesCleared + linesCleared}
+Avg Holes per Piece: ${(stats.totalHoles / (stats.piecesPlaced + 1)).toFixed(2)}
+=================
+        `);
         setGameOver(true);
       } else {
         setCurrentPiece(nextPiece);
@@ -172,7 +234,7 @@ export const useTetris = (isAI = false) => {
     const aiTimeout = setTimeout(makeAIMove, 300);
     
     return () => clearTimeout(aiTimeout);
-  }, [isAI, currentPiece.type, board, gameOver]);
+  }, [isAI, currentPiece.type, board, gameOver, score, stats]);
 
   return {
     board: displayBoard(),

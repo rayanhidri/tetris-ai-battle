@@ -51,7 +51,14 @@ export const getAggregateHeight = (board) => {
     
     let bumpiness = 0;
     for (let i = 0; i < heights.length - 1; i++) {
-      bumpiness += Math.abs(heights[i] - heights[i + 1]);
+      const diff = Math.abs(heights[i] - heights[i + 1]);
+      
+      // reduce penalty for edge columns (0-1 and 8-9)
+      if (i === 0 || i === 8) {
+        bumpiness += diff * 0.5;  // half penalty for edges
+      } else {
+        bumpiness += diff;  // full penalty for middle columns
+      }
     }
     
     return bumpiness;
@@ -69,18 +76,19 @@ export const getAggregateHeight = (board) => {
     return completeLines;
   };
   
-  // Weighted score: these weights are from experimenting
-  // TODO: might need to tune these more
-  export const evaluateBoard = (board) => {
+  // Weighted score - lower is better
+// TODO: might need to tune these more
+export const evaluateBoard = (board) => {
     const height = getAggregateHeight(board);
     const holes = countHoles(board);
     const bumpiness = getBumpiness(board);
     const completeLines = countCompleteLines(board);
     
-    const heightWeight = 0.5;
-    const holesWeight = 0.4
-    const bumpinessWeight = 0.2
-    const linesWeight = -0.8; // negative = we want more lines
+    // adjusted after testing - holes were the main issue
+    const heightWeight = 0.25;
+    const holesWeight = 1.1;  // way higher - holes kill the game
+    const bumpinessWeight = 0.2;  // lower so AI uses edges more
+    const linesWeight = -3.0;  // better reward for clearing lines
     
     return (
       height * heightWeight +

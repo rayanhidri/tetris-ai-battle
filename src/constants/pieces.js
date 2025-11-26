@@ -1,12 +1,12 @@
 // Les 7 pièces Tetris avec leurs rotations
 export const PIECES = {
-    I: {
-      shape: [
-        [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]],
-        [[0,0,1,0], [0,0,1,0], [0,0,1,0], [0,0,1,0]],
-      ],
-      color: '#00f0f0'
-    },
+  I: {
+    shape: [
+      [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], // horizontal
+      [[1,0,0,0], [1,0,0,0], [1,0,0,0], [1,0,0,0]], // vertical - colonne 0 au lieu de 2
+    ],
+    color: '#00f0f0'
+  },
     O: {
       shape: [
         [[1,1], [1,1]]
