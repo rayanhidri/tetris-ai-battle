@@ -73,10 +73,19 @@ export const useTetris = (isAI = false) => {
     }
   }, [board, currentPiece, gameOver]);
 
-  const drop = useCallback(() => {
+  const drop = useCallback((isManual = false) => {
     if (gameOver) return;
+    
+    let pointsEarned = 0;
+    
     if (canPlacePiece(board, currentPiece, currentPiece.x, currentPiece.y + 1)) {
       setCurrentPiece(prev => ({ ...prev, y: prev.y + 1 }));
+      
+      // Give 1 point for manual soft drop
+      if (isManual && !isAI) {
+        pointsEarned = 1;
+        setScore(prev => prev + 1);
+      }
     } else {
       // lock piece and check for lines
       const newBoard = mergePieceToBoard(board, currentPiece);
@@ -86,14 +95,13 @@ export const useTetris = (isAI = false) => {
       setScore(prev => prev + linesCleared * 100);
       
       const nextPiece = randomPiece();
-      if (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, nextPiece.y)) {
+      if ( (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, 0)) && (!canPlacePiece(clearedBoard, nextPiece, nextPiece.x, 1))) {
         setGameOver(true);
       } else {
         setCurrentPiece(nextPiece);
       }
     }
-  }, [board, currentPiece, gameOver]);
-
+  }, [board, currentPiece, gameOver, isAI]);
   const hardDrop = useCallback(() => {
     if (gameOver) return;
     

@@ -85,10 +85,10 @@ export const evaluateBoard = (board) => {
     const completeLines = countCompleteLines(board);
     
     // adjusted after testing - holes were the main issue
-    const heightWeight = 0.25;
+    const heightWeight = 0.285;
     const holesWeight = 1.1;  // way higher - holes kill the game
     const bumpinessWeight = 0.2;  // lower so AI uses edges more
-    const linesWeight = -3.0;  // better reward for clearing lines
+    const linesWeight = -2.85;  // better reward for clearing lines
     
     return (
       height * heightWeight +
