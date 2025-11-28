@@ -64,7 +64,7 @@ export const getAggregateHeight = (board) => {
     return bumpiness;
   };
 
-  // Get the height of the tallest column
+  // get the height of the tallest column
 export const getMaxColumnHeight = (board) => {
     let maxHeight = 0;
     
@@ -102,18 +102,35 @@ export const evaluateBoard = (board) => {
     const holes = countHoles(board);
     const bumpiness = getBumpiness(board);
     const completeLines = countCompleteLines(board);
-    const maxHeight = getMaxColumnHeight(board);  // NEW
+    const maxHeight = getMaxColumnHeight(board);
     
-    // adjusted after testing - holes were the main issue
-    const heightWeight = 0.26; 
-    const holesWeight = 1.25;   
-    const bumpinessWeight = 0.4; 
-    const linesWeight = -2.4;   
+    // adaptative weights based on danger level
+    let heightWeight, holesWeight, bumpinessWeight, linesWeight;
+    
+    if (maxHeight < 8) {
+      // early game : aggressive
+      heightWeight = 0.22;
+      holesWeight = 1.25;
+      bumpinessWeight = 0.35;
+      linesWeight = -2.8;
+    } else if (maxHeight < 14) {
+      // mid game - balanced
+      heightWeight = 0.28;
+      holesWeight = 1.25;
+      bumpinessWeight = 0.55;
+      linesWeight = -2.2;
+    } else {
+      // survival mode
+      heightWeight = 0.38;
+      holesWeight = 1.5;
+      bumpinessWeight = 0.6;
+      linesWeight = -3.2;
+    }
     
     return (
       height * heightWeight +
       holes * holesWeight +
       bumpiness * bumpinessWeight +
-      completeLines * linesWeight 
+      completeLines * linesWeight
     );
   };
