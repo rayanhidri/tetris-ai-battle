@@ -1,4 +1,4 @@
-import { PIECES } from '../constants/pieces';
+import { PIECES, PIECE_TYPES } from '../constants/pieces';
 import { canPlacePiece, mergePieceToBoard } from './gameLogic';
 import { evaluateBoard } from './aiLogic';
 
@@ -94,3 +94,50 @@ export const findBestMove = (board, piece) => {
   
   return allMoves[0];
 };
+
+// Lookahead 2-ply: considers next piece
+export const findBestMoveWithLookahead = (board, piece) => {
+    const currentMoves = getAllPossibleMoves(board, piece);
+    
+    if (currentMoves.length === 0) return null;
+    
+    // For each possible move with current piece
+    const movesWithLookahead = currentMoves.map(move => {
+      let totalScore = 0;
+      
+      // Simulate all 7 possible next pieces
+      PIECE_TYPES.forEach(nextPieceType => {
+        const nextPiece = {
+          type: nextPieceType,
+          shape: PIECES[nextPieceType].shape[0],
+          color: PIECES[nextPieceType].color,
+          rotation: 0
+        };
+        
+        // Find best move for this next piece
+        const nextMoves = getAllPossibleMoves(move.board, nextPiece);
+        
+        if (nextMoves.length > 0) {
+          // Sort to find best next move
+          nextMoves.sort((a, b) => a.score - b.score);
+          totalScore += nextMoves[0].score;
+        } else {
+          // If no valid moves, heavily penalize
+          totalScore += 1000;
+        }
+      });
+      
+      // Average score across all possible next pieces
+      const avgScore = totalScore / PIECE_TYPES.length;
+      
+      return {
+        ...move,
+        lookaheadScore: avgScore
+      };
+    });
+    
+    // Sort by lookahead score
+    movesWithLookahead.sort((a, b) => a.lookaheadScore - b.lookaheadScore);
+    
+    return movesWithLookahead[0];
+  };

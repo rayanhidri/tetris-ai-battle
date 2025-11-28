@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { PIECES, PIECE_TYPES } from '../constants/pieces';
 import { canPlacePiece, mergePieceToBoard, clearLines } from '../utils/gameLogic';
-import { findBestMove } from '../utils/aiMoves';
+import { findBestMove, findBestMoveWithLookahead } from '../utils/aiMoves';
 import { countHoles } from '../utils/aiLogic';
 
 const BOARD_WIDTH = 10;
@@ -18,7 +18,7 @@ const randomPiece = () => {
     color: PIECES[type].color,
     rotation: 0,
     x: Math.floor(BOARD_WIDTH / 2) - 1,
-    y: 0
+    y: -1
   };
 };
 
@@ -150,7 +150,7 @@ export const useTetris = (isAI = false) => {
     if (!isAI || gameOver) return;
     
     const makeAIMove = () => {
-      const bestMove = findBestMove(board, currentPiece);
+      const bestMove = findBestMoveWithLookahead(board, currentPiece);
       
       if (!bestMove) {
         setGameOver(true);

@@ -1,4 +1,4 @@
-// AI evaluation functions for board state
+//
 // Lower score = better position
 
 export const getAggregateHeight = (board) => {
@@ -16,7 +16,7 @@ export const getAggregateHeight = (board) => {
     return totalHeight;
   };
   
-  // Count empty cells that have blocks above them
+  // count empty cells that have blocks above them
   export const countHoles = (board) => {
     let holes = 0;
     
@@ -34,7 +34,7 @@ export const getAggregateHeight = (board) => {
     return holes;
   };
   
-  // How uneven the surface is
+  // chek how uneven the surface is
   export const getBumpiness = (board) => {
     const heights = [];
     
@@ -63,6 +63,25 @@ export const getAggregateHeight = (board) => {
     
     return bumpiness;
   };
+
+  // Get the height of the tallest column
+export const getMaxColumnHeight = (board) => {
+    let maxHeight = 0;
+    
+    for (let x = 0; x < 10; x++) {
+      for (let y = 0; y < 20; y++) {
+        if (board[y][x] !== null) {
+          const height = 20 - y;
+          if (height > maxHeight) {
+            maxHeight = height;
+          }
+          break;
+        }
+      }
+    }
+    
+    return maxHeight;
+  };
   
   export const countCompleteLines = (board) => {
     let completeLines = 0;
@@ -83,17 +102,18 @@ export const evaluateBoard = (board) => {
     const holes = countHoles(board);
     const bumpiness = getBumpiness(board);
     const completeLines = countCompleteLines(board);
+    const maxHeight = getMaxColumnHeight(board);  // NEW
     
     // adjusted after testing - holes were the main issue
-    const heightWeight = 0.285;
-    const holesWeight = 1.1;  // way higher - holes kill the game
-    const bumpinessWeight = 0.2;  // lower so AI uses edges more
-    const linesWeight = -2.85;  // better reward for clearing lines
+    const heightWeight = 0.26; 
+    const holesWeight = 1.25;   
+    const bumpinessWeight = 0.4; 
+    const linesWeight = -2.4;   
     
     return (
       height * heightWeight +
       holes * holesWeight +
       bumpiness * bumpinessWeight +
-      completeLines * linesWeight
+      completeLines * linesWeight 
     );
   };
